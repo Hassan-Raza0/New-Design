@@ -110,10 +110,10 @@ const QuotePage: React.FC = () => {
                   <Zap className="h-10 w-10 text-blue-600" />
                 </div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                  AI-Powered Device Detection
+                  Smart Device Detection
                 </h1>
                 <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                  Upload clear photos of your device and our AI will automatically detect your model and provide an instant quote.
+                    Upload clear photos of your device — our system will suggest the model and generate an instant quote for you.
                 </p>
               </div>
 
@@ -318,7 +318,7 @@ const QuotePage: React.FC = () => {
                   <div className="bg-white bg-opacity-20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                     <Shield className="h-10 w-10 text-white" />
                   </div>
-                  <h2 className="text-4xl font-bold mb-4">Your AI-Generated Quote</h2>
+                  <h2 className="text-4xl font-bold mb-4">Quote calculated based on the details you provided </h2>
                   <p className="text-blue-100 text-xl">
                     {quote.wasDetected ? '🤖 AI-Detected Model' : '📱 Manually Selected'} • 1-Month Free Trial
                   </p>
@@ -352,7 +352,7 @@ const QuotePage: React.FC = () => {
                       </div>
                       {quote.wasDetected && (
                         <div className="flex justify-between">
-                          <span className="text-blue-200">AI Confidence:</span>
+                          <span className="text-blue-200">Image-Based Confidence Score:</span>
                           <span className="font-semibold">{Math.round(quote.detectionConfidence * 100)}%</span>
                         </div>
                       )}
