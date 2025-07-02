@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Clock, Star, CheckCircle, ArrowRight, Play, Award, Users, DollarSign, Zap, Camera, MapPin, Phone } from 'lucide-react';
+import { Shield, Smartphone, Clock, Star, CheckCircle, ArrowRight, Play, Award, Users, DollarSign, Zap, Camera, MapPin, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '../components/Layout';
 
@@ -79,6 +79,9 @@ const HomePage: React.FC = () => {
     { icon: MapPin, value: '2,500+', label: 'Repair Centers' }
   ];
 
+  // Define Icon component based on current step
+  const Icon = steps[currentStep].icon;
+
   return (
     <Layout>
       {/* Hero Section - Akko Style */}
@@ -148,61 +151,54 @@ const HomePage: React.FC = () => {
               </div>
             </motion.div>
             
-{/* Interactive Demo */}
-{(() => {
-  const Icon = steps[currentStep].icon;
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8, delay: 0.2 }}
-      className="relative"
-    >
-      <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 border border-white border-opacity-20 shadow-2xl">
-        <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold mb-4">How It Works</h3>
-          <div className="flex justify-center space-x-2 mb-6">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  index === currentStep ? 'bg-yellow-400' : 'bg-white bg-opacity-30'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
+            {/* Interactive Demo */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 border border-white border-opacity-20 shadow-2xl">
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold mb-4">How It Works</h3>
+                  <div className="flex justify-center space-x-2 mb-6">
+                    {steps.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`w-3 h-3 rounded-full transition-all ${
+                          index === currentStep ? 'bg-yellow-400' : 'bg-white bg-opacity-30'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <div className="bg-yellow-400 text-gray-900 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-            <Icon className="h-10 w-10" />
-          </div>
-          <h4 className="text-xl font-bold mb-2">{steps[currentStep].title}</h4>
-          <p className="text-blue-100">{steps[currentStep].description}</p>
-        </motion.div>
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center"
+                >
+                  <div className="bg-yellow-400 text-gray-900 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                    <Icon className="h-10 w-10" />
+                  </div>
+                  <h4 className="text-xl font-bold mb-2">{steps[currentStep].title}</h4>
+                  <p className="text-blue-100">{steps[currentStep].description}</p>
+                </motion.div>
 
-        <div className="mt-8 text-center">
-          <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold inline-block">
-            ✓ Coverage starts instantly
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-})()}
-
+                <div className="mt-8 text-center">
+                  <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold inline-block">
+                    ✓ Coverage starts instantly
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section - Akko Style with Savings */}
-      
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -220,16 +216,6 @@ const HomePage: React.FC = () => {
               Transparent pricing with no hidden fees. Cancel anytime.
             </p>
           </div>
-              {/* Info Box */}
-    <div className="mb-12 bg-blue-50 border border-blue-200 p-6 rounded-md text-sm text-gray-700 md:col-span-3">
-
-      <p className="mb-2">
-        <strong>Basic Plan Pricing:</strong> from <span className="font-bold text-blue-700">$5 – $12</span> depending on iPhone model.
-      </p>
-      <p>
-        <strong>Deductible:</strong> <span className="font-bold text-blue-700">$29 – $99</span> based on the claim type.
-      </p>
-    </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan, index) => (
@@ -288,50 +274,6 @@ const HomePage: React.FC = () => {
               </motion.div>
             ))}
           </div>
-      {/* Optional Add-ons */}
-<section className="py-20 bg-gray-50">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center mb-16">
-      <h2 className="text-4xl font-bold text-gray-900 mb-4">Optional Add-ons</h2>
-      <p className="text-xl text-gray-600">Enhance your protection with these optional services.</p>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {[
-        {
-          id: 'express',
-          name: 'Express Replacement',
-          description: 'Next-day device replacement',
-          price: 4.99
-        },
-        {
-          id: 'international',
-          name: 'International Coverage',
-          description: 'Worldwide protection',
-          price: 2.99
-        },
-        {
-          id: 'accessories',
-          name: 'Accessories Coverage',
-          description: 'Cases, chargers, and more',
-          price: 1.99
-        }
-      ].map((addOn, index) => (
-        <motion.div
-          key={addOn.id}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: index * 0.1 }}
-          className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
-        >
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{addOn.name}</h3>
-          <p className="text-gray-600 mb-4">{addOn.description}</p>
-          <div className="text-lg font-semibold text-blue-600">+${addOn.price}/month</div>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</section>
 
           {/* Money Back Guarantee */}
           <motion.div
@@ -346,7 +288,6 @@ const HomePage: React.FC = () => {
           </motion.div>
         </div>
       </section>
-
 
       {/* Social Proof - Enhanced */}
       <section className="py-20 bg-white">

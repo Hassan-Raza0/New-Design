@@ -1,97 +1,69 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Upload, X, CheckCircle, ArrowRight, Smartphone, Shield, Zap, Clock, Star } from 'lucide-react';
+import { CheckCircle, ArrowRight, Smartphone, Shield, Zap, Clock, Star, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '../components/Layout';
+import PhoneDetection from '../components/PhoneDetection';
+import { modelPricing, getBadgeColor } from '../utils/phoneDetection';
 
 interface QuoteForm {
-  devicePhotos: FileList;
-  phoneCondition: string;
+  deviceType: string;
+  deviceModel: string;
   purchaseDate: string;
-  plan: string;
 }
 
 const QuotePage: React.FC = () => {
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [frontImage, setFrontImage] = useState<File | null>(null);
+  const [backImage, setBackImage] = useState<File | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [quote, setQuote] = useState<any>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [detectedModel, setDetectedModel] = useState<string>('');
+  const [detectionConfidence, setDetectionConfidence] = useState<number>(0);
   
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuoteForm>();
   
-  const selectedPlan = watch('plan');
+  const selectedDeviceType = watch('deviceType');
+  const selectedModel = watch('deviceModel');
 
-  const plans = [
-    {
-      id: 'essential',
-      name: 'Essential',
-      price: 8.99,
-      originalPrice: 12.99,
-      features: ['Screen repair', 'Basic protection', '24/7 support'],
-      popular: false,
-      savings: 31
-    },
-    {
-      id: 'complete',
-      name: 'Complete',
-      price: 16.99,
-      originalPrice: 24.99,
-      features: ['Everything in Essential', 'Theft coverage', 'Water damage', 'Unlimited claims'],
-      popular: true,
-      savings: 32
-    },
-    {
-      id: 'family',
-      name: 'Family',
-      price: 29.99,
-      originalPrice: 44.99,
-      features: ['Up to 5 devices', 'All Complete features', 'Family dashboard'],
-      popular: false,
-      savings: 33
-    }
-  ];
+  const handleModelDetected = (model: string, confidence: number) => {
+    setDetectedModel(model);
+    setDetectionConfidence(confidence);
+    setValue('deviceModel', model);
+  };
 
-  const handleImageUpload = (files: FileList | null) => {
-    if (!files) return;
+  const handleImagesUploaded = (front: File | null, back: File | null) => {
+    setFrontImage(front);
+    setBackImage(back);
     
-    const newImages = Array.from(files).slice(0, 4 - uploadedImages.length);
-    setUploadedImages(prev => [...prev, ...newImages]);
-    
-    if (newImages.length > 0) {
-      setIsAnalyzing(true);
-      // Simulate AI analysis
-      setTimeout(() => {
-        setIsAnalyzing(false);
-        setCurrentStep(2);
-      }, 2000);
+    // Auto-advance to next step when both images are uploaded
+    if (front && back && currentStep === 1) {
+      setTimeout(() => setCurrentStep(2), 1000);
     }
   };
 
-  const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  const handleModelChange = (model: string) => {
+    setValue('deviceModel', model);
+    setDetectedModel(model);
   };
 
   const calculateQuote = (data: QuoteForm) => {
-    const selectedPlanData = plans.find(p => p.id === data.plan);
-    if (!selectedPlanData) return;
+    const modelData = modelPricing[data.deviceModel as keyof typeof modelPricing];
+    if (!modelData) return;
 
     const mockQuote = {
-      plan: selectedPlanData,
-      monthlyPrice: selectedPlanData.price,
-      yearlyPrice: selectedPlanData.price * 12,
-      savings: selectedPlanData.originalPrice * 12 - selectedPlanData.price * 12,
-      deviceValue: 899, // Mock detected value
-      coverage: 'Full replacement value',
-      deductible: data.plan === 'essential' ? 25 : data.plan === 'complete' ? 50 : 0
+      deviceType: data.deviceType,
+      deviceModel: data.deviceModel,
+      monthlyPrice: modelData.price,
+      yearlyPrice: modelData.price * 12,
+      deductible: modelData.deductible,
+      badge: modelData.badge,
+      trialDays: 30,
+      detectionConfidence: detectionConfidence,
+      wasDetected: detectionConfidence > 0
     };
 
     setQuote(mockQuote);
     setCurrentStep(3);
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
   };
 
   return (
@@ -120,13 +92,13 @@ const QuotePage: React.FC = () => {
               ))}
             </div>
             <div className="flex justify-between text-sm text-gray-600">
-              <span>Upload Photos</span>
+              <span>Upload & Detect</span>
               <span>Device Details</span>
               <span>Your Quote</span>
             </div>
           </div>
 
-          {/* Step 1: Photo Upload */}
+          {/* Step 1: AI Phone Detection */}
           {currentStep === 1 && (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -135,87 +107,82 @@ const QuotePage: React.FC = () => {
             >
               <div className="text-center mb-8">
                 <div className="bg-blue-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                  <Camera className="h-10 w-10 text-blue-600" />
+                  <Zap className="h-10 w-10 text-blue-600" />
                 </div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                  Take Photos of Your Device
+                  AI-Powered Device Detection
                 </h1>
                 <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                  Our AI will analyze your device condition and provide an instant quote. 
-                  Take clear photos from different angles.
+                  Upload clear photos of your device and our AI will automatically detect your model and provide an instant quote.
                 </p>
               </div>
 
-              {/* Upload Area */}
+              {/* Device Type Selection */}
               <div className="mb-8">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e.target.files)}
-                  className="hidden"
-                />
-                
-                <div 
-                  onClick={triggerFileInput}
-                  className="border-3 border-dashed border-blue-300 rounded-2xl p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
-                >
-                  <Upload className="h-16 w-16 text-blue-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Click to upload or drag photos here
-                  </h3>
-                  <p className="text-gray-600">
-                    Upload up to 4 photos • PNG, JPG up to 10MB each
-                  </p>
-                </div>
-              </div>
-
-              {/* Uploaded Images */}
-              {uploadedImages.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  {uploadedImages.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Device ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-xl"
-                      />
-                      <button
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                <label className="block text-lg font-semibold text-gray-900 mb-4">
+                  Device Type *
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="cursor-pointer">
+                    <input
+                      {...register('deviceType', { required: 'Please select device type' })}
+                      type="radio"
+                      value="phone"
+                      className="sr-only"
+                    />
+                    <div className={`border-2 rounded-xl p-6 text-center transition-all ${
+                      selectedDeviceType === 'phone' 
+                        ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <Smartphone className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                      <span className="font-semibold">Phone</span>
                     </div>
-                  ))}
+                  </label>
+                  <label className="cursor-pointer">
+                    <input
+                      {...register('deviceType')}
+                      type="radio"
+                      value="tablet"
+                      className="sr-only"
+                    />
+                    <div className={`border-2 rounded-xl p-6 text-center transition-all ${
+                      selectedDeviceType === 'tablet' 
+                        ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <Shield className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                      <span className="font-semibold">Tablet</span>
+                    </div>
+                  </label>
                 </div>
-              )}
-
-              {/* AI Analysis */}
-              {isAnalyzing && (
-                <div className="bg-blue-50 rounded-2xl p-6 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    AI Analyzing Your Device...
-                  </h3>
-                  <p className="text-gray-600">
-                    Our advanced AI is examining your photos to determine device condition and value.
-                  </p>
-                </div>
-              )}
-
-              {/* Tips */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-green-900 mb-2">📱 Front & Back</h4>
-                  <p className="text-green-700 text-sm">Take clear photos of both front and back of your device</p>
-                </div>
-                <div className="bg-yellow-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-yellow-900 mb-2">💡 Good Lighting</h4>
-                  <p className="text-yellow-700 text-sm">Use natural light for best AI analysis results</p>
-                </div>
+                {errors.deviceType && (
+                  <p className="text-red-600 text-sm mt-2">{errors.deviceType.message}</p>
+                )}
               </div>
+
+              {/* Phone Detection Component */}
+              {selectedDeviceType && (
+                <PhoneDetection
+                  onModelDetected={handleModelDetected}
+                  onImagesUploaded={handleImagesUploaded}
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                />
+              )}
+
+              {/* Continue Button */}
+              {(frontImage && backImage) || selectedModel ? (
+                <div className="mt-8">
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 rounded-xl font-bold text-lg transition-all transform hover:scale-105 flex items-center justify-center"
+                  >
+                    Continue to Details
+                    <ArrowRight className="ml-2 h-6 w-6" />
+                  </button>
+                </div>
+              ) : null}
             </motion.div>
           )}
 
@@ -228,27 +195,85 @@ const QuotePage: React.FC = () => {
             >
               <div className="text-center mb-8">
                 <div className="bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                  <Zap className="h-10 w-10 text-green-600" />
+                  <CheckCircle className="h-10 w-10 text-green-600" />
                 </div>
                 <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                  AI Analysis Complete!
+                  Device Details Confirmed
                 </h2>
-                <div className="bg-green-50 rounded-2xl p-6 mb-8">
-                  <div className="flex items-center justify-center space-x-4">
-                    <Smartphone className="h-8 w-8 text-green-600" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">iPhone 15 Pro Detected</h3>
-                      <p className="text-gray-600">Condition: Excellent • Value: $899</p>
+                {detectedModel && detectionConfidence > 0 && (
+                  <div className="bg-green-50 rounded-2xl p-6 mb-8">
+                    <div className="flex items-center justify-center space-x-4">
+                      <Zap className="h-8 w-8 text-green-600" />
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          AI Detected: {detectedModel}
+                        </h3>
+                        <p className="text-gray-600">
+                          Confidence: {Math.round(detectionConfidence * 100)}% • You can confirm or edit below
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <form onSubmit={handleSubmit(calculateQuote)} className="space-y-8">
+                {/* Model Selection with AI Detection */}
+                <div>
+                  <label className="block text-lg font-semibold text-gray-900 mb-4">
+                    Device Model *
+                  </label>
+                  <PhoneDetection
+                    onModelDetected={handleModelDetected}
+                    onImagesUploaded={handleImagesUploaded}
+                    selectedModel={selectedModel}
+                    onModelChange={handleModelChange}
+                  />
+                  <input
+                    {...register('deviceModel', { required: 'Please select your device model' })}
+                    type="hidden"
+                    value={selectedModel || ''}
+                  />
+                  {errors.deviceModel && (
+                    <p className="text-red-600 text-sm mt-2">{errors.deviceModel.message}</p>
+                  )}
+                </div>
+
+                {/* Show pricing when model is selected */}
+                {selectedModel && modelPricing[selectedModel as keyof typeof modelPricing] && (
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Your Plan Preview</h3>
+                        <div className="flex items-center space-x-3">
+                          <span className={`px-4 py-2 rounded-full text-sm font-bold border ${getBadgeColor(modelPricing[selectedModel as keyof typeof modelPricing].badge)}`}>
+                            ${modelPricing[selectedModel as keyof typeof modelPricing].price}/month
+                          </span>
+                          <span className="text-gray-600">
+                            Deductible: ${modelPricing[selectedModel as keyof typeof modelPricing].deductible}
+                          </span>
+                        </div>
+                      </div>
+                      <Shield className="h-12 w-12 text-blue-600" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Deductible Info Box */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="h-6 w-6 text-yellow-600" />
+                    <div>
+                      <h4 className="font-semibold text-yellow-900">Deductible Information</h4>
+                      <p className="text-yellow-800">Deductible: $29 – $99 (Based on device condition and model)</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Purchase Date */}
                 <div>
                   <label className="block text-lg font-semibold text-gray-900 mb-4">
-                    When did you purchase this device?
+                    When did you purchase this device? *
                   </label>
                   <input
                     {...register('purchaseDate', { required: 'Purchase date is required' })}
@@ -260,60 +285,22 @@ const QuotePage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Plan Selection */}
-                <div>
-                  <label className="block text-lg font-semibold text-gray-900 mb-6">
-                    Choose Your Protection Plan
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {plans.map((plan) => (
-                      <label key={plan.id} className="cursor-pointer">
-                        <input
-                          {...register('plan', { required: 'Please select a plan' })}
-                          type="radio"
-                          value={plan.id}
-                          className="sr-only"
-                        />
-                        <div className={`border-2 rounded-2xl p-6 transition-all ${
-                          selectedPlan === plan.id 
-                            ? 'border-blue-500 bg-blue-50 shadow-lg' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}>
-                          {plan.popular && (
-                            <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-4 inline-block">
-                              Most Popular
-                            </div>
-                          )}
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                          <div className="mb-4">
-                            <span className="text-gray-400 line-through text-lg">${plan.originalPrice}</span>
-                            <div className="text-3xl font-bold text-gray-900">${plan.price}</div>
-                            <div className="text-green-600 font-semibold">Save {plan.savings}%</div>
-                          </div>
-                          <ul className="space-y-2">
-                            {plan.features.map((feature, index) => (
-                              <li key={index} className="flex items-center text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                  {errors.plan && (
-                    <p className="text-red-600 text-sm mt-2">{errors.plan.message}</p>
-                  )}
+                <div className="flex space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(1)}
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-4 px-8 rounded-xl font-bold text-lg transition-all"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 rounded-xl font-bold text-lg transition-all transform hover:scale-105 flex items-center justify-center"
+                  >
+                    Get My Quote
+                    <ArrowRight className="ml-2 h-6 w-6" />
+                  </button>
                 </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 rounded-xl font-bold text-lg transition-all transform hover:scale-105 flex items-center justify-center"
-                >
-                  Get My Quote
-                  <ArrowRight className="ml-2 h-6 w-6" />
-                </button>
               </form>
             </motion.div>
           )}
@@ -331,57 +318,69 @@ const QuotePage: React.FC = () => {
                   <div className="bg-white bg-opacity-20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                     <Shield className="h-10 w-10 text-white" />
                   </div>
-                  <h2 className="text-4xl font-bold mb-4">Your Personalized Quote</h2>
-                  <p className="text-blue-100 text-xl">Protection starts immediately after signup</p>
+                  <h2 className="text-4xl font-bold mb-4">Your AI-Generated Quote</h2>
+                  <p className="text-blue-100 text-xl">
+                    {quote.wasDetected ? '🤖 AI-Detected Model' : '📱 Manually Selected'} • 1-Month Free Trial
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                   <div>
-                    <div className="text-6xl font-bold mb-2">
-                      ${quote.monthlyPrice}
-                      <span className="text-2xl text-blue-200">/month</span>
-                    </div>
-                    <div className="text-blue-200 mb-6">
-                      ${quote.yearlyPrice}/year • Save ${quote.savings.toFixed(0)} annually
+                    <div className="flex items-center space-x-3 mb-6">
+                      <span className={`px-4 py-2 rounded-full text-lg font-bold ${getBadgeColor(quote.badge)} text-gray-900`}>
+                        ${quote.monthlyPrice}/month
+                      </span>
+                      <span className="text-blue-200">after trial</span>
                     </div>
                     
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span className="text-blue-200">Plan:</span>
-                        <span className="font-semibold">{quote.plan.name}</span>
+                        <span className="text-blue-200">Device:</span>
+                        <span className="font-semibold">{quote.deviceModel}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-blue-200">Device Value:</span>
-                        <span className="font-semibold">${quote.deviceValue}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-blue-200">Coverage:</span>
-                        <span className="font-semibold">{quote.coverage}</span>
+                        <span className="text-blue-200">Monthly Plan:</span>
+                        <span className="font-semibold">${quote.monthlyPrice}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-blue-200">Deductible:</span>
                         <span className="font-semibold">${quote.deductible}</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-200">Trial Period:</span>
+                        <span className="font-semibold">{quote.trialDays} days FREE</span>
+                      </div>
+                      {quote.wasDetected && (
+                        <div className="flex justify-between">
+                          <span className="text-blue-200">AI Confidence:</span>
+                          <span className="font-semibold">{Math.round(quote.detectionConfidence * 100)}%</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Trial Info */}
+                    <div className="mt-6 bg-white bg-opacity-20 rounded-xl p-4">
+                      <h4 className="font-semibold mb-2">🎉 1-Month Free Trial</h4>
+                      <p className="text-blue-100 text-sm mb-2">
+                        $1 charged today to verify your card (non-refundable)
+                      </p>
+                      <p className="text-blue-100 text-sm">
+                        Plan starts after 30 days based on your device
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 py-4 px-8 rounded-xl font-bold text-lg transition-all transform hover:scale-105">
-                      Get Protected Now
+                      Start Free Trial
                     </button>
                     <button className="w-full border-2 border-white hover:bg-white hover:text-blue-600 py-4 px-8 rounded-xl font-bold text-lg transition-all">
                       Save Quote
                     </button>
                     
-                    <div className="flex items-center justify-center space-x-6 text-sm mt-6">
-                      <div className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        <span>No commitment</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        <span>Cancel anytime</span>
-                      </div>
+                    <div className="text-center text-sm mt-6">
+                      <p className="text-blue-200 mb-2">You have 30 days left in your trial</p>
+                      <p className="text-blue-200">You can cancel anytime before trial ends to avoid full charge</p>
                     </div>
                   </div>
                 </div>

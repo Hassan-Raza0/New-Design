@@ -48,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden md:flex items-center space-x-8">
               {navigation.map((item) => (
                 <div key={item.name} className="relative">
                   {item.dropdown ? (
@@ -57,7 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       onMouseEnter={() => setIsCompanyDropdownOpen(true)}
                       onMouseLeave={() => setIsCompanyDropdownOpen(false)}
                     >
-                      <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                      <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors h-10">
                         {item.name}
                         <ChevronDown className="ml-1 h-4 w-4" />
                       </button>
@@ -90,7 +90,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         isActive(item.href)
                           ? 'text-blue-600 border-b-2 border-blue-600'
                           : 'text-gray-700 hover:text-blue-600'
-                      } px-3 py-2 text-sm font-medium transition-colors`}
+                      } px-3 py-2 text-sm font-medium transition-colors h-10 flex items-center`}
                     >
                       {item.name}
                     </Link>
