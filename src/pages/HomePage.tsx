@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Smartphone, Clock, Star, CheckCircle, ArrowRight, Play, Award, Users, DollarSign, Zap, Camera, MapPin, Phone } from 'lucide-react';
+import { Shield, Smartphone, Clock, Star, CheckCircle, ArrowRight, Play, Award, Users, DollarSign, Zap, Camera, MapPin, Phone, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '../components/Layout';
+import { planTypes } from '../utils/phoneDetection';
 
 const HomePage: React.FC = () => {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    { title: 'Take a Photo', description: 'Snap a picture of your device', icon: Camera },
-    { title: 'Get Instant Quote', description: 'AI analyzes and prices instantly', icon: Zap },
+    { title: 'Choose Your Device', description: 'Select your phone model and plan', icon: Smartphone },
+    { title: 'Get Instant Quote', description: 'See pricing instantly', icon: Zap },
     { title: 'Activate Protection', description: 'Coverage starts immediately', icon: Shield }
   ];
 
@@ -23,28 +24,62 @@ const HomePage: React.FC = () => {
 
   const plans = [
     {
-      name: 'Essential',
-      price: '$8.99',
-      originalPrice: '$12.99',
+      name: 'Basic Plan',
+      price: '$5 - $12',
+      originalPrice: '$8 - $18',
       features: ['Screen repair coverage', 'Basic device protection', '24/7 support', '2 claims per year'],
       popular: false,
-      savings: 'Save $4/month'
+      savings: 'Device-based pricing',
+      description: 'Essential protection based on your device model'
     },
     {
-      name: 'Complete',
-      price: '$16.99',
-      originalPrice: '$24.99',
-      features: ['Everything in Essential', 'Theft coverage', 'Water damage protection', 'Unlimited claims', 'Express replacement'],
+      name: 'Premium Plan',
+      price: '$19.99',
+      originalPrice: '$29.99',
+      features: ['Everything in Basic', 'Theft coverage', 'Water damage protection', 'Unlimited claims', 'Express replacement'],
       popular: true,
-      savings: 'Save $8/month'
+      savings: 'Save $10/month',
+      description: 'Complete protection with premium features'
     },
     {
-      name: 'Family',
-      price: '$29.99',
-      originalPrice: '$44.99',
-      features: ['Up to 5 devices', 'All Complete features', 'Family dashboard', 'Priority support', 'Device tracking'],
+      name: 'Family Plan',
+      price: '$34.99',
+      originalPrice: '$49.99',
+      features: ['Up to 5 devices', 'All Premium features', 'Family dashboard', 'Priority support', 'Device tracking'],
       popular: false,
-      savings: 'Save $15/month'
+      savings: 'Save $15/month',
+      description: 'Protect your entire family\'s devices'
+    }
+  ];
+
+  const addOns = [
+    {
+      name: 'Express Replacement',
+      price: '$4.99',
+      description: 'Get a replacement device within 24 hours',
+      icon: Clock,
+      popular: true
+    },
+    {
+      name: 'International Coverage',
+      price: '$2.99',
+      description: 'Protection while traveling abroad',
+      icon: MapPin,
+      popular: false
+    },
+    {
+      name: 'Data Recovery Service',
+      price: '$3.99',
+      description: 'Professional data recovery assistance',
+      icon: Shield,
+      popular: false
+    },
+    {
+      name: 'Premium Support',
+      price: '$1.99',
+      description: 'Priority customer service and dedicated support',
+      icon: Phone,
+      popular: false
     }
   ];
 
@@ -66,7 +101,7 @@ const HomePage: React.FC = () => {
     {
       name: 'Emily Davis',
       rating: 5,
-      text: 'The AI damage assessment was spot-on. Got my quote in seconds, not days.',
+      text: 'The instant quote system was amazing. Got my price in seconds, not days.',
       location: 'Chicago, IL',
       avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100'
     }
@@ -84,7 +119,7 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Akko Style */}
+      {/* Hero Section - Enhanced Design */}
       <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 text-white overflow-hidden min-h-screen flex items-center">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
@@ -113,8 +148,8 @@ const HomePage: React.FC = () => {
               </h1>
               
               <p className="text-xl lg:text-2xl text-blue-100 leading-relaxed mb-8 max-w-2xl">
-                Get instant coverage with AI-powered claims processing. 
-                <span className="font-semibold text-white"> No waiting, no hassle.</span>
+                Instant quotes, model-based pricing, and comprehensive coverage. 
+                <span className="font-semibold text-white"> Protect your device in minutes, not hours.</span>
               </p>
 
               {/* CTA Buttons */}
@@ -123,7 +158,7 @@ const HomePage: React.FC = () => {
                   to="/quote"
                   className="group bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-8 py-4 rounded-xl text-lg font-bold transition-all transform hover:scale-105 inline-flex items-center justify-center shadow-lg hover:shadow-xl"
                 >
-                  <Camera className="mr-3 h-6 w-6" />
+                  <Smartphone className="mr-3 h-6 w-6" />
                   Get Instant Quote
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
@@ -198,7 +233,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Pricing Section - Akko Style with Savings */}
+      {/* Pricing Section - Updated with new plans */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -249,6 +284,7 @@ const HomePage: React.FC = () => {
                     <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
                       {plan.savings}
                     </div>
+                    <p className="text-gray-600 mt-3">{plan.description}</p>
                   </div>
                   
                   <ul className="space-y-4 mb-8">
@@ -274,6 +310,49 @@ const HomePage: React.FC = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Optional Add-ons Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="mt-16"
+          >
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">Optional Add-ons</h3>
+              <p className="text-xl text-gray-600">Enhance your protection with these premium features</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {addOns.map((addon, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow relative"
+                >
+                  {addon.popular && (
+                    <div className="absolute -top-2 -right-2">
+                      <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                        Popular
+                      </span>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <addon.icon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2">{addon.name}</h4>
+                    <div className="text-2xl font-bold text-blue-600 mb-2">
+                      +{addon.price}
+                      <span className="text-sm text-gray-600">/month</span>
+                    </div>
+                    <p className="text-gray-600 text-sm">{addon.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
           {/* Money Back Guarantee */}
           <motion.div
@@ -348,20 +427,20 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Grid - Akko Style */}
+      {/* Features Grid - Updated */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose CoverCell?</h2>
-            <p className="text-xl text-gray-600">Advanced protection powered by AI technology</p>
+            <p className="text-xl text-gray-600">Advanced protection with instant quotes</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                icon: Zap,
-                title: 'AI-Powered Claims',
-                description: 'Upload a photo, get instant damage assessment and repair quote in seconds',
+                icon: Smartphone,
+                title: 'Model-Based Pricing',
+                description: 'Fair pricing based on your exact device model, not one-size-fits-all',
                 color: 'bg-yellow-100 text-yellow-600'
               },
               {
@@ -391,7 +470,7 @@ const HomePage: React.FC = () => {
               {
                 icon: DollarSign,
                 title: 'No Hidden Fees',
-                description: 'Transparent pricing with no deductibles on screen repairs',
+                description: 'Transparent pricing with clear deductibles based on device condition',
                 color: 'bg-indigo-100 text-indigo-600'
               }
             ].map((feature, index) => (
@@ -413,7 +492,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Final CTA - Akko Style */}
+      {/* Final CTA - Enhanced */}
       <section className="py-20 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
@@ -438,7 +517,7 @@ const HomePage: React.FC = () => {
                 to="/quote"
                 className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-10 py-5 rounded-xl text-xl font-bold transition-all transform hover:scale-105 inline-flex items-center justify-center shadow-2xl"
               >
-                <Camera className="mr-3 h-6 w-6" />
+                <Smartphone className="mr-3 h-6 w-6" />
                 Get Instant Quote
               </Link>
               <Link

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Shield, Eye, EyeOff, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Shield, Eye, EyeOff, CheckCircle, AlertCircle, Clock, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
-import PhoneDetection from '../components/PhoneDetection';
-import { modelPricing, getBadgeColor } from '../utils/phoneDetection';
+import DeviceImageUpload from '../components/DeviceImageUpload';
+import { modelPricing, getBadgeColor, phoneModels, planTypes, calculatePlanPrice, addOns } from '../utils/phoneDetection';
 
 interface RegisterForm {
   firstName: string;
@@ -22,6 +22,9 @@ interface RegisterForm {
   zipCode: string;
   deviceType: string;
   deviceModel: string;
+  customDeviceName?: string;
+  planType: string;
+  selectedAddOns: string[];
   purchaseDate: string;
   terms: boolean;
 }
@@ -33,9 +36,8 @@ const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [detectedModel, setDetectedModel] = useState<string>('');
-  const [detectionConfidence, setDetectionConfidence] = useState<number>(0);
   const [trialDaysLeft, setTrialDaysLeft] = useState(30);
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
   
@@ -43,22 +45,20 @@ const RegisterPage: React.FC = () => {
   
   const selectedDeviceType = watch('deviceType');
   const selectedModel = watch('deviceModel');
+  const selectedPlan = watch('planType');
   const password = watch('password');
-
-  const handleModelDetected = (model: string, confidence: number) => {
-    setDetectedModel(model);
-    setDetectionConfidence(confidence);
-    setValue('deviceModel', model);
-  };
 
   const handleImagesUploaded = (front: File | null, back: File | null) => {
     setFrontImage(front);
     setBackImage(back);
   };
 
-  const handleModelChange = (model: string) => {
-    setValue('deviceModel', model);
-    setDetectedModel(model);
+  const handleAddOnToggle = (addOnId: string) => {
+    setSelectedAddOns(prev => 
+      prev.includes(addOnId) 
+        ? prev.filter(id => id !== addOnId)
+        : [...prev, addOnId]
+    );
   };
 
   const nextStep = () => {
@@ -72,6 +72,11 @@ const RegisterPage: React.FC = () => {
   const onSubmit = async (data: RegisterForm) => {
     if (data.password !== data.confirmPassword) {
       toast.error('Passwords do not match');
+      return;
+    }
+
+    if (!frontImage || !backImage) {
+      toast.error('Please upload both device verification photos');
       return;
     }
 
@@ -125,6 +130,32 @@ const RegisterPage: React.FC = () => {
     );
   }
 
+  const calculateCurrentQuote = () => {
+    if (!selectedModel || !selectedPlan) return null;
+    
+    const deviceModel = selectedModel === 'other' ? 'Other Device' : selectedModel;
+    const modelData = modelPricing[deviceModel as keyof typeof modelPricing];
+    const planData = planTypes.find(p => p.id === selectedPlan);
+    if (!modelData || !planData) return null;
+
+    const planPrice = calculatePlanPrice(deviceModel, selectedPlan);
+    const addOnsCost = selectedAddOns.reduce((total, addOnId) => {
+      const addOn = addOns.find(a => a.id === addOnId);
+      return total + (addOn?.price || 0);
+    }, 0);
+
+    return {
+      planPrice,
+      addOnsCost,
+      totalPrice: planPrice + addOnsCost,
+      deductible: modelData.deductible,
+      planName: planData.name,
+      badge: modelData.badge
+    };
+  };
+
+  const currentQuote = calculateCurrentQuote();
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50 py-12">
@@ -150,9 +181,9 @@ const RegisterPage: React.FC = () => {
               ))}
             </div>
             <div className="flex justify-between text-sm text-gray-600">
-              <span>AI Upload</span>
-              <span>Personal</span>
-              <span>Summary</span>
+              <span>Device & Plan</span>
+              <span>Personal Info</span>
+              <span>Verification</span>
               <span>Confirm</span>
             </div>
           </div>
@@ -164,7 +195,7 @@ const RegisterPage: React.FC = () => {
           >
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Get Protected Today</h1>
-              <p className="text-gray-600 mt-2">Start your 1-month free trial with AI-powered device detection</p>
+              <p className="text-gray-600 mt-2">Start your 1-month free trial with instant device protection</p>
               
               {/* Trial Info Banner */}
               <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
@@ -178,10 +209,10 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              {/* Step 1: AI Image Upload & Detection */}
+              {/* Step 1: Device & Plan Selection */}
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-semibold text-gray-900">AI Device Detection</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Select Device & Plan</h2>
                   
                   {/* Device Type Selection */}
                   <div>
@@ -227,20 +258,185 @@ const RegisterPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* AI Phone Detection */}
+                  {/* Device Model Selection */}
                   {selectedDeviceType && (
-                    <PhoneDetection
-                      onModelDetected={handleModelDetected}
-                      onImagesUploaded={handleImagesUploaded}
-                      selectedModel={selectedModel}
-                      onModelChange={handleModelChange}
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Device Model *
+                      </label>
+                      <select
+                        {...register('deviceModel', { required: 'Please select your device model' })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Choose your device model</option>
+                        <optgroup label="iPhone Models">
+                          {phoneModels.filter(model => model.includes('iPhone')).map((model) => (
+                            <option key={model} value={model}>
+                              {model}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Samsung Models">
+                          {phoneModels.filter(model => model.includes('Samsung')).map((model) => (
+                            <option key={model} value={model}>
+                              {model}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Other">
+                          <option value="other">Other (Please specify)</option>
+                        </optgroup>
+                      </select>
+                      {errors.deviceModel && (
+                        <p className="text-red-600 text-sm mt-1">{errors.deviceModel.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Custom Device Name Input */}
+                  {selectedModel === 'other' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Device Name *
+                      </label>
+                      <input
+                        {...register('customDeviceName', { 
+                          required: selectedModel === 'other' ? 'Please enter your device name' : false 
+                        })}
+                        type="text"
+                        placeholder="Enter your device name (e.g., Google Pixel 8, OnePlus 12)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {errors.customDeviceName && (
+                        <p className="text-red-600 text-sm mt-1">{errors.customDeviceName.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Plan Type Selection */}
+                  {selectedModel && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Protection Plan *
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {planTypes.map((plan) => (
+                          <label key={plan.id} className="cursor-pointer">
+                            <input
+                              {...register('planType', { required: 'Please select a plan' })}
+                              type="radio"
+                              value={plan.id}
+                              className="sr-only"
+                            />
+                            <div className={`border-2 rounded-lg p-4 transition-all relative ${
+                              selectedPlan === plan.id 
+                                ? 'border-blue-500 bg-blue-50' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}>
+                              {plan.popular && (
+                                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                                  <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                    Popular
+                                  </span>
+                                </div>
+                              )}
+                              <h3 className="font-bold text-lg mb-1">{plan.name}</h3>
+                              <div className="text-xl font-bold text-blue-600 mb-2">
+                                {plan.id === 'basic' 
+                                  ? `$${modelPricing[selectedModel === 'other' ? 'Other Device' : selectedModel]?.price || 0}`
+                                  : `$${plan.basePrice}`}
+                                <span className="text-sm text-gray-600">/month</span>
+                              </div>
+                              <p className="text-gray-600 text-sm">{plan.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      {errors.planType && (
+                        <p className="text-red-600 text-sm mt-1">{errors.planType.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Optional Add-ons */}
+                  {selectedPlan && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Optional Add-ons
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {addOns.map((addon) => (
+                          <div
+                            key={addon.id}
+                            className={`border-2 rounded-lg p-4 cursor-pointer transition-all relative ${
+                              selectedAddOns.includes(addon.id)
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => handleAddOnToggle(addon.id)}
+                          >
+                            {addon.popular && (
+                              <div className="absolute -top-2 -right-2">
+                                <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                  Popular
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-gray-900">{addon.name}</h4>
+                              <div className="flex items-center">
+                                <span className="text-blue-600 font-bold">+${addon.price}</span>
+                                <div className={`ml-2 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                  selectedAddOns.includes(addon.id)
+                                    ? 'bg-blue-600 border-blue-600'
+                                    : 'border-gray-300'
+                                }`}>
+                                  {selectedAddOns.includes(addon.id) && (
+                                    <CheckCircle className="h-3 w-3 text-white" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-gray-600 text-sm">{addon.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Current Quote Preview */}
+                  {currentQuote && (
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Your Plan Preview</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Base Plan:</span>
+                          <span className="font-semibold">${currentQuote.planPrice}</span>
+                        </div>
+                        {currentQuote.addOnsCost > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Add-ons:</span>
+                            <span className="font-semibold">+${currentQuote.addOnsCost}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="text-gray-600">Total Monthly:</span>
+                          <div className={`text-lg font-bold ${getBadgeColor(currentQuote.badge)} px-2 py-1 rounded`}>
+                            ${currentQuote.totalPrice}
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Deductible:</span>
+                          <span className="font-semibold">${currentQuote.deductible}</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   <button
                     type="button"
                     onClick={nextStep}
-                    disabled={!selectedModel}
+                    disabled={!selectedModel || !selectedPlan}
                     className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                   >
                     Continue
@@ -429,6 +625,20 @@ const RegisterPage: React.FC = () => {
                         <p className="text-red-600 text-sm mt-1">{errors.zipCode.message}</p>
                       )}
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Purchase Date *
+                      </label>
+                      <input
+                        {...register('purchaseDate', { required: 'Purchase date is required' })}
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {errors.purchaseDate && (
+                        <p className="text-red-600 text-sm mt-1">{errors.purchaseDate.message}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex space-x-4">
@@ -450,37 +660,68 @@ const RegisterPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Step 3: Device & Plan Summary */}
+              {/* Step 3: Device Verification Photos */}
               {currentStep === 3 && (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Device & Plan Summary</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Device Verification</h2>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Purchase Date *
-                    </label>
-                    <input
-                      {...register('purchaseDate', { required: 'Purchase date is required' })}
-                      type="date"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {errors.purchaseDate && (
-                      <p className="text-red-600 text-sm mt-1">{errors.purchaseDate.message}</p>
-                    )}
-                  </div>
+                  <DeviceImageUpload
+                    onImagesUploaded={handleImagesUploaded}
+                    frontImage={frontImage}
+                    backImage={backImage}
+                  />
 
+                  <div className="flex space-x-4">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      disabled={!frontImage || !backImage}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Final Confirmation */}
+              {currentStep === 4 && (
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Confirm Registration</h2>
+                  
                   {/* Plan Summary Card */}
-                  {selectedModel && modelPricing[selectedModel as keyof typeof modelPricing] && (
+                  {currentQuote && (
                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
                       <h3 className="text-lg font-bold text-gray-900 mb-4">Plan Summary</h3>
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Device:</span>
-                          <span className="font-semibold">{selectedModel}</span>
+                          <span className="font-semibold">{selectedModel === 'other' ? watch('customDeviceName') || 'Other Device' : selectedModel}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Plan:</span>
-                          <span className="font-semibold">${modelPricing[selectedModel as keyof typeof modelPricing].price}/month</span>
+                          <span className="font-semibold">{currentQuote.planName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Base Price:</span>
+                          <span className="font-semibold">${currentQuote.planPrice}</span>
+                        </div>
+                        {currentQuote.addOnsCost > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Add-ons:</span>
+                            <span className="font-semibold">+${currentQuote.addOnsCost}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="text-gray-600">Total Monthly:</span>
+                          <span className="font-semibold text-lg">${currentQuote.totalPrice}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Trial:</span>
@@ -488,14 +729,8 @@ const RegisterPage: React.FC = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Deductible:</span>
-                          <span className="font-semibold">${modelPricing[selectedModel as keyof typeof modelPricing].deductible}</span>
+                          <span className="font-semibold">${currentQuote.deductible}</span>
                         </div>
-                        {detectionConfidence > 0 && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">AI Detection:</span>
-                            <span className="font-semibold text-blue-600">{Math.round(detectionConfidence * 100)}% confidence</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}
@@ -522,30 +757,6 @@ const RegisterPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex space-x-4">
-                    <button
-                      type="button"
-                      onClick={prevStep}
-                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-colors"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={nextStep}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Final Confirmation */}
-              {currentStep === 4 && (
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Confirm Registration</h2>
                   
                   {/* Terms and Conditions */}
                   <div>

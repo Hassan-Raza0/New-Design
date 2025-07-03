@@ -65,49 +65,119 @@ export const modelPricing: Record<string, ModelPricing> = {
   'Samsung Galaxy S22 Ultra': { price: 12, deductible: 79, badge: 'gold' },
   'Samsung Galaxy Note 20': { price: 12, deductible: 79, badge: 'gold' },
   'Samsung Galaxy Note 20 Ultra': { price: 12, deductible: 79, badge: 'gold' },
+  
+  // Other devices - default pricing
+  'Other Device': { price: 10, deductible: 59, badge: 'blue' },
 };
 
 export const phoneModels = Object.keys(modelPricing);
 
-// Simulate AI model detection (in production, this would call your ML model)
-export const detectPhoneModel = async (imageFile: File): Promise<DetectionResult> => {
-  return new Promise((resolve) => {
-    // Simulate processing time
-    setTimeout(() => {
-      // Simulate different detection scenarios
-      const random = Math.random();
-      
-      if (random < 0.1) {
-        // 10% chance of invalid/non-phone detection
-        resolve({
-          model: 'Invalid',
-          confidence: 0.3,
-          isValid: false,
-          category: 'invalid'
-        });
-      } else if (random < 0.8) {
-        // 70% chance of successful iPhone detection
-        const iPhoneModels = phoneModels.filter(model => model.includes('iPhone'));
-        const randomModel = iPhoneModels[Math.floor(Math.random() * iPhoneModels.length)];
-        resolve({
-          model: randomModel,
-          confidence: 0.85 + Math.random() * 0.14, // 85-99% confidence
-          isValid: true,
-          category: 'iphone'
-        });
-      } else {
-        // 20% chance of Samsung detection
-        const samsungModels = phoneModels.filter(model => model.includes('Samsung'));
-        const randomModel = samsungModels[Math.floor(Math.random() * samsungModels.length)];
-        resolve({
-          model: randomModel,
-          confidence: 0.85 + Math.random() * 0.14,
-          isValid: true,
-          category: 'samsung'
-        });
-      }
-    }, 2000 + Math.random() * 1000); // 2-3 seconds processing time
-  });
+// Plan types
+export interface PlanType {
+  id: string;
+  name: string;
+  basePrice: number;
+  description: string;
+  features: string[];
+  popular?: boolean;
+}
+
+export const planTypes: PlanType[] = [
+  {
+    id: 'basic',
+    name: 'Basic Plan',
+    basePrice: 0, // Will be calculated based on device
+    description: 'Essential protection for your device',
+    features: [
+      'Screen repair coverage',
+      'Basic accidental damage',
+      '24/7 customer support',
+      '2 claims per year'
+    ]
+  },
+  {
+    id: 'premium',
+    name: 'Premium Plan',
+    basePrice: 19.99,
+    description: 'Complete protection with premium features',
+    features: [
+      'Everything in Basic',
+      'Theft protection',
+      'Water damage coverage',
+      'Unlimited claims',
+      'Express replacement',
+      'Priority support'
+    ],
+    popular: true
+  },
+  {
+    id: 'family',
+    name: 'Family Plan',
+    basePrice: 34.99,
+    description: 'Protect up to 5 devices under one plan',
+    features: [
+      'Up to 5 devices',
+      'All Premium features',
+      'Family dashboard',
+      'Shared deductibles',
+      'Device tracking',
+      'Group discounts'
+    ]
+  }
+];
+
+// Optional add-ons
+export interface AddOn {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  popular?: boolean;
+}
+
+export const addOns: AddOn[] = [
+  {
+    id: 'express-replacement',
+    name: 'Express Replacement',
+    price: 4.99,
+    description: 'Get a replacement device within 24 hours',
+    popular: true
+  },
+  {
+    id: 'international-coverage',
+    name: 'International Coverage',
+    price: 2.99,
+    description: 'Protection while traveling abroad'
+  },
+  {
+    id: 'data-recovery',
+    name: 'Data Recovery Service',
+    price: 3.99,
+    description: 'Professional data recovery assistance'
+  },
+  {
+    id: 'premium-support',
+    name: 'Premium Support',
+    price: 1.99,
+    description: 'Priority customer service and dedicated support'
+  }
+];
+
+// Calculate plan price based on device and plan type
+export const calculatePlanPrice = (deviceModel: string, planType: string): number => {
+  const devicePricing = modelPricing[deviceModel];
+  if (!devicePricing) return 0;
+
+  switch (planType) {
+    case 'basic':
+      return devicePricing.price;
+    case 'premium':
+      return 19.99;
+    case 'family':
+      return 34.99;
+    default:
+      return devicePricing.price;
+  }
 };
 
 // Validate image file

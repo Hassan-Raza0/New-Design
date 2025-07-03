@@ -4,8 +4,6 @@ import toast from 'react-hot-toast';
 type UserRole = 'admin' | 'shop_owner' | 'employee' | 'customer';
 
 interface User {
-  [x: string]: any;
-  shop: any;
   id: string;
   name: string;
   email: string;
@@ -43,29 +41,25 @@ const mockUsers: User[] = [
     id: '1',
     name: 'Admin User',
     email: 'admin@covercell.com',
-    role: 'admin',
-    shop: undefined
+    role: 'admin'
   },
   {
     id: '2',
     name: 'Shop Owner',
     email: 'shop@covercell.com',
-    role: 'shop_owner',
-    shop: undefined
+    role: 'shop_owner'
   },
   {
     id: '3',
     name: 'Employee',
     email: 'employee@covercell.com',
-    role: 'employee',
-    shop: undefined
+    role: 'employee'
   },
   {
     id: '4',
     name: 'Customer',
     email: 'customer@example.com',
-    role: 'customer',
-    shop: undefined
+    role: 'customer'
   }
 ];
 
@@ -94,12 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  async function register(email: string, _password: string, userData: Partial<User>): Promise<boolean> {
+  const register = async (email: string, password: string, userData: Partial<User>): Promise<boolean> => {
     setLoading(true);
-
+    
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-
+    
     // Create new user
     const newUser: User = {
       id: Date.now().toString(),
@@ -110,17 +104,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       address: userData.address,
       city: userData.city,
       state: userData.state,
-      zip_code: userData.zip_code,
-      shop: undefined
+      zip_code: userData.zip_code
     };
-
+    
     // Add to mock users
     mockUsers.push(newUser);
-
+    
     toast.success('Registration successful! You can now sign in.');
     setLoading(false);
     return true;
-  }
+  };
 
   const logout = async (): Promise<void> => {
     setUser(null);
