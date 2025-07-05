@@ -104,7 +104,8 @@ const handlePayment = async (data: PaymentForm) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        amount: quote.totalPrice * 100, // Stripe takes amount in cents
+        amount: Math.round(quote.totalPrice * 100),
+ // Stripe takes amount in cents
         cardNumber: data.cardNumber,
         expiryDate: data.expiryDate,
         cvv: data.cvv,
