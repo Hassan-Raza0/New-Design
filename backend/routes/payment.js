@@ -37,13 +37,16 @@ router.post('/create-payment', async (req, res) => {
     });
 
     // Create a payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount, // amount in cents (e.g. $10 = 1000)
-      currency: 'usd',
-      payment_method: paymentMethod.id,
-      confirmation_method: 'manual',
-      confirm: true
-    });
+const paymentIntent = await stripe.paymentIntents.create({
+  amount,
+  currency: 'usd',
+  payment_method: paymentMethod.id,
+  confirm: true,
+  automatic_payment_methods: {
+    enabled: true,
+    allow_redirects: 'never' // Optional: avoids redirect-based methods
+  }
+});
 
     res.json({ success: true, id: paymentIntent.id });
 
