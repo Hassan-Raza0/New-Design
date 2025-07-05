@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Shield, Eye, EyeOff, CheckCircle, AlertCircle, Clock, Plus } from 'lucide-react';
+import { Shield, Eye, EyeOff, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
 import DeviceImageUpload from '../components/DeviceImageUpload';
-import { modelPricing, getBadgeColor, phoneModels, planTypes, calculatePlanPrice, addOns } from '../utils/phoneDetection';
+import { modelPricing, getBadgeColor, phoneModels, planTypes, calculatePlanPrice } from '../utils/phoneDetection';
 
 interface RegisterForm {
   firstName: string;
@@ -22,10 +22,11 @@ interface RegisterForm {
   zipCode: string;
   deviceType: string;
   deviceModel: string;
-  customDeviceName?: string;
   planType: string;
-  selectedAddOns: string[];
   purchaseDate: string;
+  accessoriesCoverage: boolean;
+  extendedWarranty: boolean;
+  dataRecovery: boolean;
   terms: boolean;
 }
 
@@ -37,7 +38,6 @@ const RegisterPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [trialDaysLeft, setTrialDaysLeft] = useState(30);
-  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
   
@@ -47,18 +47,38 @@ const RegisterPage: React.FC = () => {
   const selectedModel = watch('deviceModel');
   const selectedPlan = watch('planType');
   const password = watch('password');
+  const accessoriesCoverage = watch('accessoriesCoverage');
+  const extendedWarranty = watch('extendedWarranty');
+  const dataRecovery = watch('dataRecovery');
+
+  // Optional Add-ons
+  const addOns = [
+    {
+      id: 'accessoriesCoverage',
+      name: 'Accessories Coverage',
+      price: 1.99,
+      description: 'Covers chargers, cases, screen protectors, and other accessories',
+      popular: true
+    },
+    {
+      id: 'extendedWarranty',
+      name: 'Extended Warranty',
+      price: 2.99,
+      description: 'Additional 12 months warranty coverage beyond manufacturer',
+      popular: false
+    },
+    {
+      id: 'dataRecovery',
+      name: 'Data Recovery',
+      price: 3.99,
+      description: 'Professional data recovery service for damaged devices',
+      popular: false
+    }
+  ];
 
   const handleImagesUploaded = (front: File | null, back: File | null) => {
     setFrontImage(front);
     setBackImage(back);
-  };
-
-  const handleAddOnToggle = (addOnId: string) => {
-    setSelectedAddOns(prev => 
-      prev.includes(addOnId) 
-        ? prev.filter(id => id !== addOnId)
-        : [...prev, addOnId]
-    );
   };
 
   const nextStep = () => {
@@ -81,16 +101,25 @@ const RegisterPage: React.FC = () => {
     }
 
     try {
-      const userData = {
-        name: `${data.firstName} ${data.lastName}`,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        zip_code: data.zipCode
-      };
+      const formData = new FormData();
+      formData.append('name', `${data.firstName} ${data.lastName}`);
+      formData.append('phone', data.phone);
+      formData.append('address', data.address);
+      formData.append('city', data.city);
+      formData.append('state', data.state);
+      formData.append('zip_code', data.zipCode);
+      formData.append('email', data.email);
+      formData.append('password', data.password);
 
-      const success = await registerUser(data.email, data.password, userData);
+      // Optionally append images if needed by backend
+      if (frontImage) {
+        formData.append('frontImage', frontImage);
+      }
+      if (backImage) {
+        formData.append('backImage', backImage);
+      }
+
+      const success = await registerUser(formData);
       
       if (success) {
         setShowSuccess(true);
@@ -133,21 +162,19 @@ const RegisterPage: React.FC = () => {
   const calculateCurrentQuote = () => {
     if (!selectedModel || !selectedPlan) return null;
     
-    const deviceModel = selectedModel === 'other' ? 'Other Device' : selectedModel;
-    const modelData = modelPricing[deviceModel as keyof typeof modelPricing];
+    const modelData = modelPricing[selectedModel as keyof typeof modelPricing];
     const planData = planTypes.find(p => p.id === selectedPlan);
     if (!modelData || !planData) return null;
 
-    const planPrice = calculatePlanPrice(deviceModel, selectedPlan);
-    const addOnsCost = selectedAddOns.reduce((total, addOnId) => {
-      const addOn = addOns.find(a => a.id === addOnId);
-      return total + (addOn?.price || 0);
-    }, 0);
+    const basePlanPrice = calculatePlanPrice(selectedModel, selectedPlan);
+    const addOnPrice = (accessoriesCoverage ? 1.99 : 0) + 
+                      (extendedWarranty ? 2.99 : 0) + 
+                      (dataRecovery ? 3.99 : 0);
 
     return {
-      planPrice,
-      addOnsCost,
-      totalPrice: planPrice + addOnsCost,
+      planPrice: basePlanPrice,
+      addOnPrice: addOnPrice,
+      totalPrice: basePlanPrice + addOnPrice,
       deductible: modelData.deductible,
       planName: planData.name,
       badge: modelData.badge
@@ -283,32 +310,9 @@ const RegisterPage: React.FC = () => {
                             </option>
                           ))}
                         </optgroup>
-                        <optgroup label="Other">
-                          <option value="other">Other (Please specify)</option>
-                        </optgroup>
                       </select>
                       {errors.deviceModel && (
                         <p className="text-red-600 text-sm mt-1">{errors.deviceModel.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Custom Device Name Input */}
-                  {selectedModel === 'other' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Device Name *
-                      </label>
-                      <input
-                        {...register('customDeviceName', { 
-                          required: selectedModel === 'other' ? 'Please enter your device name' : false 
-                        })}
-                        type="text"
-                        placeholder="Enter your device name (e.g., Google Pixel 8, OnePlus 12)"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      {errors.customDeviceName && (
-                        <p className="text-red-600 text-sm mt-1">{errors.customDeviceName.message}</p>
                       )}
                     </div>
                   )}
@@ -343,7 +347,7 @@ const RegisterPage: React.FC = () => {
                               <h3 className="font-bold text-lg mb-1">{plan.name}</h3>
                               <div className="text-xl font-bold text-blue-600 mb-2">
                                 {plan.id === 'basic' 
-                                  ? `$${modelPricing[selectedModel === 'other' ? 'Other Device' : selectedModel]?.price || 0}`
+                                  ? `$${modelPricing[selectedModel]?.price || 0}`
                                   : `$${plan.basePrice}`}
                                 <span className="text-sm text-gray-600">/month</span>
                               </div>
@@ -361,43 +365,33 @@ const RegisterPage: React.FC = () => {
                   {/* Optional Add-ons */}
                   {selectedPlan && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-4">
                         Optional Add-ons
                       </label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-4">
                         {addOns.map((addon) => (
-                          <div
-                            key={addon.id}
-                            className={`border-2 rounded-lg p-4 cursor-pointer transition-all relative ${
-                              selectedAddOns.includes(addon.id)
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => handleAddOnToggle(addon.id)}
-                          >
-                            {addon.popular && (
-                              <div className="absolute -top-2 -right-2">
-                                <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                                  Popular
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-gray-900">{addon.name}</h4>
-                              <div className="flex items-center">
-                                <span className="text-blue-600 font-bold">+${addon.price}</span>
-                                <div className={`ml-2 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                                  selectedAddOns.includes(addon.id)
-                                    ? 'bg-blue-600 border-blue-600'
-                                    : 'border-gray-300'
-                                }`}>
-                                  {selectedAddOns.includes(addon.id) && (
-                                    <CheckCircle className="h-3 w-3 text-white" />
-                                  )}
+                          <div key={addon.id} className={`border-2 rounded-lg p-4 transition-all ${
+                            addon.popular ? 'border-purple-200 bg-purple-50' : 'border-gray-200'
+                          }`}>
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                              <input
+                                {...register(addon.id as keyof RegisterForm)}
+                                type="checkbox"
+                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-semibold text-gray-900">{addon.name}</span>
+                                  <span className="text-purple-600 font-bold">+${addon.price}/month</span>
                                 </div>
+                                <p className="text-gray-600 text-sm mt-1">{addon.description}</p>
+                                {addon.popular && (
+                                  <span className="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-semibold mt-2">
+                                    Popular Add-on
+                                  </span>
+                                )}
                               </div>
-                            </div>
-                            <p className="text-gray-600 text-sm">{addon.description}</p>
+                            </label>
                           </div>
                         ))}
                       </div>
@@ -411,16 +405,16 @@ const RegisterPage: React.FC = () => {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Base Plan:</span>
-                          <span className="font-semibold">${currentQuote.planPrice}</span>
+                          <span className="font-semibold">${currentQuote.planPrice}/month</span>
                         </div>
-                        {currentQuote.addOnsCost > 0 && (
+                        {currentQuote.addOnPrice > 0 && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">Add-ons:</span>
-                            <span className="font-semibold">+${currentQuote.addOnsCost}</span>
+                            <span className="font-semibold">+${currentQuote.addOnPrice}/month</span>
                           </div>
                         )}
                         <div className="flex justify-between border-t pt-2">
-                          <span className="text-gray-600">Total Monthly:</span>
+                          <span className="text-gray-900 font-semibold">Total Monthly:</span>
                           <div className={`text-lg font-bold ${getBadgeColor(currentQuote.badge)} px-2 py-1 rounded`}>
                             ${currentQuote.totalPrice}
                           </div>
@@ -703,7 +697,7 @@ const RegisterPage: React.FC = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Device:</span>
-                          <span className="font-semibold">{selectedModel === 'other' ? watch('customDeviceName') || 'Other Device' : selectedModel}</span>
+                          <span className="font-semibold">{selectedModel}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Plan:</span>
@@ -711,17 +705,17 @@ const RegisterPage: React.FC = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Base Price:</span>
-                          <span className="font-semibold">${currentQuote.planPrice}</span>
+                          <span className="font-semibold">${currentQuote.planPrice}/month</span>
                         </div>
-                        {currentQuote.addOnsCost > 0 && (
+                        {currentQuote.addOnPrice > 0 && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">Add-ons:</span>
-                            <span className="font-semibold">+${currentQuote.addOnsCost}</span>
+                            <span className="font-semibold">+${currentQuote.addOnPrice}/month</span>
                           </div>
                         )}
                         <div className="flex justify-between border-t pt-2">
                           <span className="text-gray-600">Total Monthly:</span>
-                          <span className="font-semibold text-lg">${currentQuote.totalPrice}</span>
+                          <span className="font-semibold">${currentQuote.totalPrice}/month</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Trial:</span>

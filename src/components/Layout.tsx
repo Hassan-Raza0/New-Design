@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Phone, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, X, Phone, User, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
@@ -11,7 +11,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
 
@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Services', href: '/services' },
     { name: 'Get Quote', href: '/quote' },
     { 
-      name: 'Company', 
+      name: 'About CoverCell', 
       href: '#',
       dropdown: [
         { name: 'About Us', href: '/about' },
@@ -54,16 +54,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {item.dropdown ? (
                     <div
                       className="relative"
-                      onMouseEnter={() => setIsCompanyDropdownOpen(true)}
-                      onMouseLeave={() => setIsCompanyDropdownOpen(false)}
+                      onMouseEnter={() => setIsAboutDropdownOpen(true)}
+                      onMouseLeave={() => setIsAboutDropdownOpen(false)}
                     >
-                      <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors h-10">
+                      <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors h-10 flex items-center">
                         {item.name}
-                        <ChevronDown className="ml-1 h-4 w-4" />
                       </button>
                       
                       <AnimatePresence>
-                        {isCompanyDropdownOpen && (
+                        {isAboutDropdownOpen && (
                           <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -286,7 +285,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Company</h3>
+              <h3 className="font-semibold mb-4">About CoverCell</h3>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
                 <li><Link to="/news" className="hover:text-white transition-colors">News</Link></li>

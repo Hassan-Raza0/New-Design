@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const authRoutes = require('./routes/auth'); // ✅ MUST export a valid router
+
+// Routes
+const authRoutes = require('./routes/auth'); // ✅ Auth routes
+const paymentRoutes = require('./routes/payment'); // ✅ Payment route
 
 const app = express();
 
@@ -13,8 +16,9 @@ app.use(express.urlencoded({ extended: true })); // For form-data
 // Static folder for uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.use('/api/auth', authRoutes); // ✅ Correct route setup
+// Mount API routes
+app.use('/api/auth', authRoutes);      // ✅ Auth API
+app.use('/api/payment', paymentRoutes); // ✅ Stripe Payment API
 
 // Start server
 const PORT = process.env.PORT || 3000;

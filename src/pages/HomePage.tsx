@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Smartphone, Clock, Star, CheckCircle, ArrowRight, Play, Award, Users, DollarSign, Zap, Camera, MapPin, Phone, Plus } from 'lucide-react';
+import { Shield, Smartphone, Clock, Star, CheckCircle, ArrowRight, Play, Award, Users, DollarSign, Zap, Camera, MapPin, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '../components/Layout';
 import { planTypes } from '../utils/phoneDetection';
@@ -45,40 +45,34 @@ const HomePage: React.FC = () => {
       name: 'Family Plan',
       price: '$34.99',
       originalPrice: '$49.99',
-      features: ['Up to 5 devices', 'All Premium features', 'Family dashboard', 'Priority support', 'Device tracking'],
+      features: ['Up to 5 devices', 'All Premium features', 'Family dashboard', 'Device tracking', 'Group discounts'],
       popular: false,
       savings: 'Save $15/month',
       description: 'Protect your entire family\'s devices'
     }
   ];
 
+  // Optional Add-ons
   const addOns = [
     {
-      name: 'Express Replacement',
-      price: '$4.99',
-      description: 'Get a replacement device within 24 hours',
-      icon: Clock,
+      name: 'Accessories Coverage',
+      price: '$1.99',
+      description: 'Covers chargers, cases, screen protectors, and other accessories',
+      icon: Shield,
       popular: true
     },
     {
-      name: 'International Coverage',
+      name: 'Extended Warranty',
       price: '$2.99',
-      description: 'Protection while traveling abroad',
-      icon: MapPin,
+      description: 'Additional 12 months warranty coverage beyond manufacturer',
+      icon: Clock,
       popular: false
     },
     {
-      name: 'Data Recovery Service',
+      name: 'Data Recovery',
       price: '$3.99',
-      description: 'Professional data recovery assistance',
-      icon: Shield,
-      popular: false
-    },
-    {
-      name: 'Premium Support',
-      price: '$1.99',
-      description: 'Priority customer service and dedicated support',
-      icon: Phone,
+      description: 'Professional data recovery service for damaged devices',
+      icon: Smartphone,
       popular: false
     }
   ];
@@ -119,7 +113,7 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Enhanced Design */}
+      {/* Hero Section - Akko Style */}
       <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 text-white overflow-hidden min-h-screen flex items-center">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
@@ -148,8 +142,8 @@ const HomePage: React.FC = () => {
               </h1>
               
               <p className="text-xl lg:text-2xl text-blue-100 leading-relaxed mb-8 max-w-2xl">
-                Instant quotes, model-based pricing, and comprehensive coverage. 
-                <span className="font-semibold text-white"> Protect your device in minutes, not hours.</span>
+                Get instant coverage with model-based pricing. 
+                <span className="font-semibold text-white"> No photos needed for quotes.</span>
               </p>
 
               {/* CTA Buttons */}
@@ -319,31 +313,35 @@ const HomePage: React.FC = () => {
           >
             <div className="text-center mb-12">
               <h3 className="text-3xl font-bold text-gray-900 mb-4">Optional Add-ons</h3>
-              <p className="text-xl text-gray-600">Enhance your protection with these premium features</p>
+              <p className="text-xl text-gray-600">Enhance your protection with these additional services</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {addOns.map((addon, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow relative"
+                  className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all hover:shadow-lg ${
+                    addon.popular ? 'border-purple-200 bg-purple-50' : 'border-gray-200'
+                  }`}
                 >
                   {addon.popular && (
-                    <div className="absolute -top-2 -right-2">
-                      <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        Popular
+                    <div className="text-center mb-3">
+                      <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        Popular Add-on
                       </span>
                     </div>
                   )}
                   <div className="text-center">
-                    <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                      <addon.icon className="h-6 w-6 text-blue-600" />
+                    <div className={`p-3 rounded-lg w-12 h-12 flex items-center justify-center mx-auto mb-4 ${
+                      addon.popular ? 'bg-purple-100' : 'bg-gray-100'
+                    }`}>
+                      <addon.icon className={`h-6 w-6 ${addon.popular ? 'text-purple-600' : 'text-gray-600'}`} />
                     </div>
-                    <h4 className="font-bold text-gray-900 mb-2">{addon.name}</h4>
-                    <div className="text-2xl font-bold text-blue-600 mb-2">
+                    <h4 className="text-lg font-bold text-gray-900 mb-2">{addon.name}</h4>
+                    <div className={`text-2xl font-bold mb-3 ${addon.popular ? 'text-purple-600' : 'text-gray-900'}`}>
                       +{addon.price}
                       <span className="text-sm text-gray-600">/month</span>
                     </div>
@@ -427,7 +425,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Grid - Updated */}
+      {/* Features Grid - Akko Style */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -492,7 +490,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Final CTA - Enhanced */}
+      {/* Final CTA - Akko Style */}
       <section className="py-20 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>

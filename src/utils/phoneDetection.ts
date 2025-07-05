@@ -65,9 +65,6 @@ export const modelPricing: Record<string, ModelPricing> = {
   'Samsung Galaxy S22 Ultra': { price: 12, deductible: 79, badge: 'gold' },
   'Samsung Galaxy Note 20': { price: 12, deductible: 79, badge: 'gold' },
   'Samsung Galaxy Note 20 Ultra': { price: 12, deductible: 79, badge: 'gold' },
-  
-  // Other devices - default pricing
-  'Other Device': { price: 10, deductible: 59, badge: 'blue' },
 };
 
 export const phoneModels = Object.keys(modelPricing);
@@ -105,8 +102,7 @@ export const planTypes: PlanType[] = [
       'Theft protection',
       'Water damage coverage',
       'Unlimited claims',
-      'Express replacement',
-      'Priority support'
+      'Express replacement'
     ],
     popular: true
   },
@@ -123,43 +119,6 @@ export const planTypes: PlanType[] = [
       'Device tracking',
       'Group discounts'
     ]
-  }
-];
-
-// Optional add-ons
-export interface AddOn {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  popular?: boolean;
-}
-
-export const addOns: AddOn[] = [
-  {
-    id: 'express-replacement',
-    name: 'Express Replacement',
-    price: 4.99,
-    description: 'Get a replacement device within 24 hours',
-    popular: true
-  },
-  {
-    id: 'international-coverage',
-    name: 'International Coverage',
-    price: 2.99,
-    description: 'Protection while traveling abroad'
-  },
-  {
-    id: 'data-recovery',
-    name: 'Data Recovery Service',
-    price: 3.99,
-    description: 'Professional data recovery assistance'
-  },
-  {
-    id: 'premium-support',
-    name: 'Premium Support',
-    price: 1.99,
-    description: 'Priority customer service and dedicated support'
   }
 ];
 

@@ -92,7 +92,8 @@ const LoginPage: React.FC = () => {
           
           <div>
             <h1 className="text-4xl lg:text-5xl font-bold mb-6">
-              Welcome Back to CoverCell
+              Welcome Back to{' '}
+              <span className="text-yellow-300">CoverCell</span>
             </h1>
             <p className="text-xl text-blue-100 mb-8">
               Sign in to manage your mobile device protection, file claims, 
@@ -102,27 +103,27 @@ const LoginPage: React.FC = () => {
 
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+              <CheckCircle className="h-6 w-6 text-yellow-300" />
               <span className="text-blue-100">Secure account access</span>
             </div>
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+              <CheckCircle className="h-6 w-6 text-yellow-300" />
               <span className="text-blue-100">24/7 customer support</span>
             </div>
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+              <CheckCircle className="h-6 w-6 text-yellow-300" />
               <span className="text-blue-100">Instant claims processing</span>
             </div>
           </div>
 
           <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 border border-white border-opacity-20">
-            <h3 className="text-lg font-semibold mb-3">Need Help?</h3>
+            <h3 className="text-lg font-semibold mb-3 text-yellow-300">Need Help?</h3>
             <p className="text-blue-100 text-sm mb-4">
               Contact our support team if you're having trouble accessing your account.
             </p>
             <div className="flex space-x-4 text-sm">
-              <span>📞 1-800-COVER-ME</span>
-              <span>✉️ support@covercell.com</span>
+              <span className="text-yellow-300">📞 1-800-COVER-ME</span>
+              <span className="text-yellow-300">✉️ support@covercell.com</span>
             </div>
           </div>
         </motion.div>
